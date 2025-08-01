@@ -31,22 +31,22 @@ class TrendFollowingWithSentiment(QCAlgorithm):
         self._sma50 = self.sma(self._symbol, 50)
         self._sma200 = self.sma(self._symbol, 200)
         
-        self.sentiment_value = self.add_data()
+        # self.sentiment = self.add_data(SentimentData(), "sentiment", Resolution.DAILY).symbol
         
         self.set_warm_up(200)
         
     def on_data(self, data):
-        if not self._sma50.is_ready or not self._sma200.is_ready or self.sentiment_value is None:
+        if not self._sma50.is_ready or not self._sma200.is_ready:
             return
 
         price = self.securities[self._symbol].price
-        holdings = self.portfolio[self._symbol].invested
+        holdings = self.portfolio[self._symbol]
 
         # Entry condition: strong trend + positive sentiment
-        if price > self._sma50.current.value and self._sma50.current.value > self._sma200.current.value and self.sentiment_value > 0.4:
-            if not holdings:
-                self.portfolio[self._symbol].set_holdings(self.symbol, 1)
+        if price > self._sma50.current.value and self._sma50.current.value > self._sma200.current.value:
+            if not holdings.invested:
+                self.set_holdings(self._symbol, 1)
         
         # Exit condition: trend weakens or sentiment drops
-        elif holdings and (price < self._sma50.current.value or self.sentiment_value < 0.4):
+        elif holdings.invested and (price < self._sma50.current.value):
             self.liquidate(self._symbol)
